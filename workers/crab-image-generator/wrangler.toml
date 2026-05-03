@@ -1,0 +1,10 @@
+name = "crab-image-generator"
+main = "index.js"
+compatibility_date = "2024-05-15"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+vars = { DEFAULT_PROMPT = "hermit crab steampunk lighthouse" }
+
+[ai]
+binding = "AI"
