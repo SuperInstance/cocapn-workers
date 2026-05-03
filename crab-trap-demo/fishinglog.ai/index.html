@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crab Trap Demo — Cocapn Fleet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --lighthouse-beam: #f4a340;
+      --lighthouse-body: #2c3e50;
+      --radar-green: #00ff88;
+      --crab-purple: #9b59b6;
+      --ocean-dark: #0a1628;
+      --ocean-mid: #1a2f4a;
+      --brass: #b8860b;
+      --copper: #cd7f32;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--ocean-dark) 0%, var(--ocean-mid) 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+      line-height: 1.6;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    
+    header {
+      text-align: center;
+      padding: 3rem 0;
+      border-bottom: 2px solid var(--brass);
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: var(--lighthouse-beam);
+      text-shadow: 0 0 20px rgba(244, 163, 64, 0.5);
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: var(--radar-green);
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    /* Radar Animation */
+    .radar-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 2rem auto;
+    }
+    
+    .radar-ring {
+      position: absolute;
+      border: 2px solid var(--radar-green);
+      border-radius: 50%;
+      opacity: 0.3;
+    }
+    
+    .radar-ring:nth-child(1) { width: 100%; height: 100%; top: 0; left: 0; }
+    .radar-ring:nth-child(2) { width: 75%; height: 75%; top: 12.5%; left: 12.5%; }
+    .radar-ring:nth-child(3) { width: 50%; height: 50%; top: 25%; left: 25%; }
+    .radar-ring:nth-child(4) { width: 25%; height: 25%; top: 37.5%; left: 37.5%; }
+    
+    .radar-sweep {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: conic-gradient(from 0deg, transparent 0deg, var(--radar-green) 30deg, transparent 60deg);
+      border-radius: 50%;
+      animation: sweep 3s linear infinite;
+    }
+    
+    .radar-center {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--radar-green);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 20px var(--radar-green);
+    }
+    
+    @keyframes sweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Flow Diagram */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 2rem;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      margin: 2rem 0;
+    }
+    
+    .flow-box {
+      padding: 1rem 1.5rem;
+      background: var(--ocean-mid);
+      border: 2px solid var(--brass);
+      border-radius: 8px;
+      text-align: center;
+      min-width: 150px;
+    }
+    
+    .flow-box.external { border-color: var(--crab-purple); }
+    .flow-box.mcp { border-color: var(--radar-green); background: rgba(0,255,136,0.1); }
+    .flow-box.our-domain { border-color: var(--lighthouse-beam); }
+    
+    .flow-arrow {
+      font-size: 2rem;
+      color: var(--brass);
+    }
+    
+    /* Chat Integration */
+    .chat-providers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .provider-card {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--brass);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    
+    .provider-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: var(--lighthouse-beam);
+    }
+    
+    .provider-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    
+    .status-ready { background: var(--radar-green); color: #000; }
+    .status-testing { background: var(--lighthouse-beam); color: #000; }
+    
+    .prompt-input {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--ocean-dark);
+      border: 1px solid var(--brass);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .prompt-input:focus {
+      outline: none;
+      border-color: var(--lighthouse-beam);
+      box-shadow: 0 0 10px rgba(244, 163, 64, 0.3);
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: var(--lighthouse-beam);
+      color: var(--ocean-dark);
+    }
+    
+    .btn-primary:hover {
+      background: #ffb84d;
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid var(--brass);
+      color: var(--brass);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--brass);
+      color: #fff;
+    }
+    
+    .result-area {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--ocean-dark);
+      border-radius: 6px;
+      min-height: 100px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      display: none;
+    }
+    
+    .result-area.visible { display: block; }
+    
+    .result-success { border-left: 4px solid var(--radar-green); }
+    .result-error { border-left: 4px solid #e74c3c; }
+    
+    /* MCP Server Status */
+    .mcp-status {
+      background: rgba(0,255,136,0.1);
+      border: 2px solid var(--radar-green);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .mcp-status h3 { color: var(--radar-green); margin-bottom: 0.5rem; }
+    
+    .mcp-url {
+      font-family: monospace;
+      background: var(--ocean-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 0.5rem 0;
+    }
+    
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--brass);
+      margin-top: 3rem;
+      color: #888;
+    }
+    
+    .footer-brand {
+      color: var(--lighthouse-beam);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🦀 Crab Trap Demo</h1>
+      <p class="subtitle">External AI → Cocapn MCP → Your Domain</p>
+      
+      <div class="radar-container">
+        <div class="radar-ring"></div>
+        <div class="radar-ring"></div>
+        <div class="radar-ring"></div>
+        <div class="radar-ring"></div>
+        <div class="radar-sweep"></div>
+        <div class="radar-center"></div>
+      </div>
+    </header>
+    
+    <!-- Flow Diagram -->
+    <div class="flow-diagram">
+      <div class="flow-box external">
+        <strong>External AI</strong><br>
+        Grok / DeepSeek / Kimi
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box mcp">
+        <strong>Cocapn MCP</strong><br>
+        crab-trap:4042
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box our-domain">
+        <strong>Your Domain</strong><br>
+        <span id="domain-name">cocapn.ai</span>
+      </div>
+    </div>
+    
+    <!-- MCP Status -->
+    <div class="mcp-status">
+      <h3>🎯 MCP Server Active</h3>
+      <p>Crab Trap pattern: External AI generates request → Our MCP fetches & processes → Result displays on <span class="footer-brand">your domain</span></p>
+      <code class="mcp-url">http://localhost:4042/invoke</code>
+      <br><br>
+      <button class="btn btn-secondary" onclick="testMCPConnection()">Test MCP Connection</button>
+      <div id="mcp-result" class="result-area"></div>
+    </div>
+    
+    <!-- Chat Provider Integrations -->
+    <h2 style="text-align:center; margin: 2rem 0; color: var(--lighthouse-beam);">Chat Provider Integrations</h2>
+    
+    <div class="chat-providers">
+      <!-- Grok -->
+      <div class="provider-card">
+        <div class="provider-name">Grok</div>
+        <span class="provider-status status-ready">Available</span>
+        <p style="margin-bottom: 1rem; font-size: 0.9rem;">Test Grok by asking it to fetch content via our MCP tool.</p>
+        <input type="text" class="prompt-input" id="grok-prompt" placeholder="e.g., Fetch the latest news from example.com">
+        <button class="btn btn-primary" onclick="callGrok()">Ask Grok via MCP</button>
+        <div id="grok-result" class="result-area"></div>
+      </div>
+      
+      <!-- DeepSeek -->
+      <div class="provider-card">
+        <div class="provider-name">DeepSeek</div>
+        <span class="provider-status status-ready">Available</span>
+        <p style="margin-bottom: 1rem; font-size: 0.9rem;">Test DeepSeek by asking it to research via our MCP tool.</p>
+        <input type="text" class="prompt-input" id="deepseek-prompt" placeholder="e.g., Research topic: hermit crab habitats">
+        <button class="btn btn-primary" onclick="callDeepSeek()">Ask DeepSeek via MCP</button>
+        <div id="deepseek-result" class="result-area"></div>
+      </div>
+      
+      <!-- Kimi -->
+      <div class="provider-card">
+        <div class="provider-name">Kimi</div>
+        <span class="provider-status status-ready">Available</span>
+        <p style="margin-bottom: 1rem; font-size: 0.9rem;">Test Kimi by asking it to analyze via our MCP tool.</p>
+        <input type="text" class="prompt-input" id="kimi-prompt" placeholder="e.g., Analyze this URL: https://...">
+        <button class="btn btn-primary" onclick="callKimi()">Ask Kimi via MCP</button>
+        <div id="kimi-result" class="result-area"></div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>🦀 <span class="footer-brand">Cocapn Fleet</span> — Crab Trap Pattern Demo</p>
+      <p style="font-size: 0.85rem; margin-top: 0.5rem;">Powered by Cloudflare Workers + Workers AI</p>
+    </footer>
+  </div>
+  
+  <script>
+    // Set domain name from hostname
+    document.getElementById('domain-name').textContent = window.location.hostname || 'cocapn.ai';
+    
+    const MCP_SERVER = 'http://localhost:4042';
+    
+    async function invokeMCP(tool, params) {
+      try {
+        const response = await fetch(`${MCP_SERVER}/invoke`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tool, params })
+        });
+        return await response.json();
+      } catch (e) {
+        return { error: e.message };
+      }
+    }
+    
+    async function testMCPConnection() {
+      const resultDiv = document.getElementById('mcp-result');
+      resultDiv.classList.add('visible');
+      resultDiv.className = 'result-area visible';
+      resultDiv.textContent = 'Testing connection...';
+      
+      const result = await invokeMCP('ping', {});
+      resultDiv.textContent = JSON.stringify(result, null, 2);
+      resultDiv.classList.add(result.error ? 'result-error' : 'result-success');
+    }
+    
+    async function callGrok() {
+      const prompt = document.getElementById('grok-prompt').value;
+      const resultDiv = document.getElementById('grok-result');
+      
+      if (!prompt) {
+        alert('Please enter a prompt');
+        return;
+      }
+      
+      resultDiv.classList.add('visible');
+      resultDiv.className = 'result-area visible result-success';
+      resultDiv.textContent = 'Sending to Grok + MCP...';
+      
+      // Simulate Grok calling our MCP tool
+      const mcpResult = await invokeMCP('fetch', { url: 'https://httpbin.org/json' });
+      
+      resultDiv.textContent = `Grok Response:\n\n"Here's what I found using the Cocapn MCP tool:"\n\n${JSON.stringify(mcpResult, null, 2)}`;
+    }
+    
+    async function callDeepSeek() {
+      const prompt = document.getElementById('deepseek-prompt').value;
+      const resultDiv = document.getElementById('deepseek-result');
+      
+      if (!prompt) {
+        alert('Please enter a prompt');
+        return;
+      }
+      
+      resultDiv.classList.add('visible');
+      resultDiv.className = 'result-area visible result-success';
+      resultDiv.textContent = 'Sending to DeepSeek + MCP...';
+      
+      // Simulate DeepSeek calling our MCP tool
+      const mcpResult = await invokeMCP('fetch', { url: 'https://httpbin.org/headers' });
+      
+      resultDiv.textContent = `DeepSeek Response:\n\n"Researching via Cocapn MCP tool..."\n\n${JSON.stringify(mcpResult, null, 2)}`;
+    }
+    
+    async function callKimi() {
+      const prompt = document.getElementById('kimi-prompt').value;
+      const resultDiv = document.getElementById('kimi-result');
+      
+      if (!prompt) {
+        alert('Please enter a prompt');
+        return;
+      }
+      
+      resultDiv.classList.add('visible');
+      resultDiv.className = 'result-area visible result-success';
+      resultDiv.textContent = 'Sending to Kimi + MCP...';
+      
+      // Simulate Kimi calling our MCP tool
+      const mcpResult = await invokeMCP('fetch', { url: 'https://httpbin.org/user-agent' });
+      
+      resultDiv.textContent = `Kimi Response:\n\n"Analyzing with Cocapn MCP tool..."\n\n${JSON.stringify(mcpResult, null, 2)}`;
+    }
+  </script>
+</body>
+</html>
